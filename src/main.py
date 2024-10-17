@@ -1,6 +1,6 @@
 import os
 import pickle
-import google.auth
+import json
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -11,27 +11,73 @@ import tkinter as tk
 import random
 from moviepy.editor import VideoFileClip
 
-# API credentials
-CLIENT_SECRET_FILE = 'client_secret.json'
-SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
-
-# Globale Variable für den Downloads-Ordner
+# Globale Variable für den Downloads-Ordner und Config
 downloads_folder = os.path.join(os.path.expanduser("~"), "Downloads")
 video_file = None
+config = None  # Placeholder for configuration
 
 # Feste YouTube-Tags
 TAGS = ["#shorts", "#oasis"]
 
-### Abschnitt 1: YouTube Downloader ###
+# Setup-Funktion zum Speichern der Konfiguration
+def run_setup():
+    config = {}
 
+    # Wähle den Download-Ordner
+    messagebox.showinfo("Setup", "Please select the folder where you want to save downloads and clips.")
+    download_folder = filedialog.askdirectory(title="Select Downloads Folder")
+    if not download_folder:
+        messagebox.showerror("Error", "No folder selected. Setup aborted.")
+        return
+    config['downloads_folder'] = download_folder
+
+    # Wähle die client_secret.json Datei
+    messagebox.showinfo("Setup", "Please select your client_secret.json file for Google API authentication.")
+    client_secret_path = filedialog.askopenfilename(title="Select client_secret.json", filetypes=[("JSON files", "*.json")])
+    if not client_secret_path:
+        messagebox.showerror("Error", "No client_secret.json file selected. Setup aborted.")
+        return
+    config['client_secret_file'] = client_secret_path
+
+    # Speichern der Konfiguration in einer Datei
+    with open('config.json', 'w') as config_file:
+        json.dump(config, config_file)
+
+    messagebox.showinfo("Setup", "Setup completed successfully! You can now use the app.")
+    load_config()  # Reload config after setup
+
+# Funktion zum Laden der Konfiguration
+def load_config():
+    global config
+    if os.path.exists('config.json'):
+        with open('config.json', 'r') as config_file:
+            config = json.load(config_file)
+    else:
+        config = None  # If no config exists, we return None
+
+# Setup-GUI und automatische Aufruf, falls keine config.json vorhanden
+def check_for_setup():
+    load_config()
+    if config is None:
+        # Wenn die Konfiguration nicht existiert, zeige das Setup-Fenster
+        run_setup()
+
+# API credentials
+SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
+
+### Abschnitt 1: YouTube Downloader ###
 def download_youtube_video():
+    if config is None:
+        messagebox.showerror("Error", "Please run the setup first.")
+        return
+
     yt_url = yt_link_entry.get()
     folder_name = folder_name_entry.get()
     
     try:
         if yt_url and folder_name:
             # Erstelle den Hauptordner im Downloads-Verzeichnis
-            output_folder = os.path.join(downloads_folder, folder_name)
+            output_folder = os.path.join(config['downloads_folder'], folder_name)
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
 
@@ -59,8 +105,11 @@ def download_youtube_video():
         messagebox.showerror("Error", f"An error occurred while downloading: {e}")
 
 ### Abschnitt 2: Video Clip Shortener ###
-
 def generate_clips():
+    if config is None:
+        messagebox.showerror("Error", "Please run the setup first.")
+        return
+
     global video_file
     folder_name = folder_name_entry.get()
     if not folder_name:
@@ -68,7 +117,7 @@ def generate_clips():
         return
 
     # Finde das heruntergeladene Video im Ordner
-    output_folder = os.path.join(downloads_folder, folder_name)
+    output_folder = os.path.join(config['downloads_folder'], folder_name)
     video_files = [f for f in os.listdir(output_folder) if f.endswith('.mp4')]
     
     if len(video_files) == 1:
@@ -116,9 +165,14 @@ def generate_clips():
         messagebox.showerror("Error", f"An error occurred: {e}")
 
 ### Abschnitt 3: YouTube Uploader ###
-
 def authenticate_youtube():
     creds = None
+    if config is None:
+        messagebox.showerror("Error", "Please run the setup first.")
+        return None
+
+    CLIENT_SECRET_FILE = config['client_secret_file']
+    
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
@@ -172,7 +226,7 @@ def upload_videos():
         messagebox.showerror("Error", "Please enter a folder name first.")
         return
 
-    best_folder = os.path.join(downloads_folder, folder_name, "Best")
+    best_folder = os.path.join(config['downloads_folder'], folder_name, "Best")
     video_files = [os.path.join(best_folder, f) for f in os.listdir(best_folder) if f.endswith('.mp4')]
 
     if not video_files:
@@ -192,11 +246,34 @@ def upload_videos():
     
     messagebox.showinfo("Success", "All videos uploaded successfully!")
 
+def tutorial_window():
+    tutorial = tk.Toplevel(root)
+    tutorial.title("App Tutorial")
+    tutorial.geometry("400x400")
+
+    tutorial_text = """
+    Welcome to the App Tutorial!
+
+    1. Download a video from YouTube.
+    2. Generate short clips from the downloaded video.
+    3. Upload selected clips to YouTube.
+
+    Follow these steps to easily manage your video content.
+    """
+    label = tk.Label(tutorial, text=tutorial_text, justify="left")
+    label.pack(padx=20, pady=20)
+
+    close_button = tk.Button(tutorial, text="Close", command=tutorial.destroy)
+    close_button.pack(pady=10)
+
 ### Gesamte GUI Struktur ###
 
 root = tk.Tk()
 root.title("YouTube Video Downloader, Shortener & Uploader")
 root.geometry("700x600")
+
+# Setup-Check durchführen, bevor das GUI verwendet werden kann
+check_for_setup()
 
 # Frame für YouTube Downloader
 yt_link_label = tk.Label(root, text="YouTube Link:")
@@ -260,5 +337,8 @@ log_output.pack(pady=10)
 # Frame für den YouTube Uploader
 upload_button = tk.Button(root, text="Upload Videos", command=upload_videos)
 upload_button.pack(pady=20)
+
+tutorial_button = tk.Button(root, text="Show Tutorial", command=tutorial_window)
+tutorial_button.pack(pady=10)
 
 root.mainloop()
