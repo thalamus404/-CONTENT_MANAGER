@@ -37,27 +37,27 @@ The **YouTube Content Manager** is an application that downloads YouTube videos,
 
 3.	First Run
 On the first run, you will need to configure the application. Run the app in the terminal:
-	•	Select the folder where you want to save videos.
-	•	Select your client_secret.json to connect with the YouTube API.
+	•	`Select the folder where you want to save videos.`
+	•	`Select your client_secret.json to connect with the YouTube API.`
 
 Usage
 
 1. Download YouTube Video
 
-	•	Enter the URL of the YouTube video in the YouTube Link field.
-	•	Enter the name of the folder where the video will be saved.
-	•	Click Download Video to download the video.
+	•	`Enter the URL of the YouTube video in the YouTube Link field.`
+	•	`Enter the name of the folder where the video will be saved.`
+	•	`Click Download Video to download the video.`
 
 2. Generate Clips
 
-	•	Choose the number of clips and the clip length.
-	•	Optionally, enter manual timecodes or choose to generate random clips.
-	•	Click Generate Clips to create the clips.
+	•	`Choose the number of clips and the clip length.`
+	•	`Optionally, enter manual timecodes or choose to generate random clips.`
+	•	`Click Generate Clips to create the clips.`
 
 3. Upload Videos to YouTube
 
-	•	Move the created clips you want to upload into the automatically generated “Best” folder.
-	•	Click Upload Videos to upload the videos. You will be prompted to enter titles, and the hashtags #shorts #oasis will automatically be added.
+	•	`Move the created clips you want to upload into the automatically generated “Best” folder.`
+	•	`Click Upload Videos to upload the videos. You will be prompted to enter titles, and the hashtags #shorts #oasis will automatically be added.`
 
 Configuration
 
