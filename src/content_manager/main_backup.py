@@ -11,6 +11,7 @@ import tkinter as tk
 import random
 from moviepy.editor import VideoFileClip
 
+
 # Globale Variable für den Downloads-Ordner und Config
 downloads_folder = os.path.join(os.path.expanduser("~"), "Downloads")
 video_file = None
